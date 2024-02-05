@@ -1,4 +1,5 @@
 from datetime import datetime as dt
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -128,7 +129,7 @@ def clean_date(date):
     return date
 
 
-def get_game_review(id, language='default', num_comments: int = -1, search_text: str = "", max_inappropriate_score: int = 50):
+def get_game_review(id, language='default', num_comments: int = -1, search_text: str = "", max_inappropriate_score: int = 50, callback: Callable[[int], None] = None):
     """Collect all review for a given game.
 
     Typical usage example:
@@ -140,11 +141,13 @@ def get_game_review(id, language='default', num_comments: int = -1, search_text:
 
     Args:
         id (int or str): Game id 
-        language (str, optional): The language in which to get the reviews. Defaults to 'default', 
+        language (str, optional): The language in which to get the reviews. Defaults to 'default',\
             which is the default language of your Steam account.
         num_comments (int, optional): Number of comments to collect. Defaults to -1, which means as many as possible.
         search_text (str, optional): Search for reviews containing this text. Defaults to "".
         max_inappropriate_score (int, optional): Maximum inappropriate score. Defaults to 50.
+        callback (Callable[[int], None], optional): Callback function to show progress. Defaults to None. It\
+            gets the current number of comments collected, every time a new page of comments is collected.
 
     Returns:
         Dataframe: Dataframe for reviews with the following columns:
@@ -233,6 +236,9 @@ def get_game_review(id, language='default', num_comments: int = -1, search_text:
         comment_list.extend(comment)
         title_list.extend(title)
         early_access_list.extend(early_access)
+
+        if callback:
+            callback(len(comment_list))
 
         if num_comments != -1 and len(comment_list) >= num_comments:
             break
