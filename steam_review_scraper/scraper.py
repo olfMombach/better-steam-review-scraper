@@ -128,7 +128,7 @@ def clean_date(date):
     return date
 
 
-def get_game_review(id, language='default', pages: int = 0):
+def get_game_review(id, language='default', num_comments: int = -1, search_text: str = "", max_inappropriate_score: int = 50):
     """Collect all review for a given game.
 
     Typical usage example:
@@ -142,7 +142,9 @@ def get_game_review(id, language='default', pages: int = 0):
         id (int or str): Game id 
         language (str, optional): The language in which to get the reviews. Defaults to 'default', 
             which is the default language of your Steam account.
-        pages (int, optional): Number of pages of reviews to collect. Defaults to 0, which means all pages.
+        num_comments (int, optional): Number of comments to collect. Defaults to -1, which means as many as possible.
+        search_text (str, optional): Search for reviews containing this text. Defaults to "".
+        max_inappropriate_score (int, optional): Maximum inappropriate score. Defaults to 50.
 
     Returns:
         Dataframe: Dataframe for reviews with the following columns:
@@ -157,7 +159,7 @@ def get_game_review(id, language='default', pages: int = 0):
         | review              | review content                                        | object  |
         | recommend           | whether the user recommend the game                   | object  |
         | early_access_review | whether this is an early access review                | object  |
-            """    
+            """
     user_name_list = []
     hour_list = []
     user_link_list = []
@@ -168,8 +170,8 @@ def get_game_review(id, language='default', pages: int = 0):
     early_access_list = []
 
     cursor = ''
-    i=0
-    while pages == 0 or i < pages:
+    i = 0
+    while True:
         url=f'https://steamcommunity.com/app/{id}/homecontent/'
         params = {
             'userreviewsoffset': i  * 10,
@@ -192,19 +194,19 @@ def get_game_review(id, language='default', pages: int = 0):
             'appHubSubSection': 10,
             'l': 'english',
             'filterLanguage': language,
-            'searchText': '',
+            'searchText': search_text,
             'forceanon':1,
-            'maxInappropriateScore':50,
+            'maxInappropriateScore': max_inappropriate_score,
         }
         if i > 0:
             params['userreviewscursor'] = cursor
         html = requests.get(url, headers=headers, params=params).text
         soup = BeautifulSoup(html, 'html.parser')
         reviews=soup.find_all('div', {'class': 'apphub_Card'})
-        
+
         if not reviews:
             break
-            
+
         users = [review.find('div', {'class': 'apphub_CardContentAuthorName'}) for review in reviews]
         user_name = [user.find('a').text for user in users]
         user_link = [user.find('a').attrs['href'] for user in users]
@@ -231,6 +233,10 @@ def get_game_review(id, language='default', pages: int = 0):
         comment_list.extend(comment)
         title_list.extend(title)
         early_access_list.extend(early_access)
+
+        if num_comments != -1 and len(comment_list) >= num_comments:
+            break
+
         i += 1
 
     review_df=pd.DataFrame({
