@@ -127,7 +127,7 @@ def clean_date(date):
     return date
 
 
-def get_game_review(id, language='default'):
+def get_game_review(id, language='default', pages: int = 0):
     """Collect all review for a given game.
 
     Typical usage example:
@@ -141,6 +141,7 @@ def get_game_review(id, language='default'):
         id (int or str): Game id 
         language (str, optional): The language in which to get the reviews. Defaults to 'default', 
             which is the default language of your Steam account.
+        pages (int, optional): Number of pages of reviews to collect. Defaults to 0, which means all pages.
 
     Returns:
         Dataframe: Dataframe for reviews with the following columns:
@@ -167,7 +168,7 @@ def get_game_review(id, language='default'):
 
     cursor = ''
     i=0
-    while True:
+    while pages == 0 or i < pages:
         url=f'https://steamcommunity.com/app/{id}/homecontent/'
         params = {
             'userreviewsoffset': i  * 10,
@@ -207,10 +208,9 @@ def get_game_review(id, language='default'):
         user_name = [user.find('a').text for user in users]
         user_link = [user.find('a').attrs['href'] for user in users]
         title = [review.find('div', {'class': 'title'}).text for review in reviews]
-        hour = [float(review.find('div', {'class': 'hours'}).text.split(' ')[0]) if review.find('div', {'class': 'hours'}) 
-                else np.nan for review in reviews]
+        hour = [float((review.find('div', {'class': 'hours'}).text.split(' ')[0]).replace(',', '.')[:len(review.find('div', {'class': 'hours'}).text.split(' ')[0]) - 2]) if review.find('div', {'class': 'hours'}) else np.nan for review in reviews]
         helpful = [review.find('div',{'class': 'found_helpful'}).get_text(strip=True).split(' ')[0] for review in reviews]
-        helpful = [0 if num == 'No' else int(num) for num in helpful]
+        helpful = [0 if num == 'No' else int(num.replace(",", "").replace(".", "")) for num in helpful]
         comment_section = [review.find('div', {'class': 'apphub_CardTextContent'}) for review in reviews]
         raw_post_date = [x.find('div',{'class':'date_posted'}).get_text(strip=True) for x in comment_section]
         post_date = [clean_date(date) for date in raw_post_date]
