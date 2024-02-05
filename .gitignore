@@ -18,3 +18,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# VS Code related things
+.vscode/
+*.code-workspace

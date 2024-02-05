@@ -1,7 +1,8 @@
 from datetime import datetime as dt
 
-import requests
+import numpy as np
 import pandas as pd
+import requests
 from bs4 import BeautifulSoup
 
 current_year = dt.today().year
