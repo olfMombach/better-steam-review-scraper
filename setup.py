@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='steam-review-scraper',
-    version='0.1.0',
+    version='0.2.0',
     author='Zhihan Zhu',
     author_email='garyzhu.zz@gmail.com',
     description='A package to scrape game reviews from Steam.',
